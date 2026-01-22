@@ -1,0 +1,22 @@
+
+{
+  "short_name": "TopTopinki",
+  "name": "TopTopinkiAPP",
+  "icons": [
+    {
+      "src": "ikona.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "ikona.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#3b5a3b",
+  "background_color": "#fcfaf2"
+}

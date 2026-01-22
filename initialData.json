@@ -1,0 +1,409 @@
+
+{
+  "version": "1.8.0",
+  "exportedAt": "2025-05-20T12:00:00.000Z",
+  "settings": {
+    "leaderSecret": "SKAUT-TAJEMSTVI-MODRY-SIP",
+    "mandatoryPoints": 1,
+    "optionalPoints": 1,
+    "scoring": {
+      "mandatoryTask": 10,
+      "optionalTask": 5,
+      "attendancePresent": 10,
+      "attendanceLate": 5,
+      "attendanceExcused": 2
+    },
+    "pdfUrl": "",
+    "activeLevelId": "zeme",
+    "showTotalLeaderboard": false,
+    "adminProfile": {
+      "nickname": "Admin",
+      "avatar": "⚙️"
+    },
+    "meetings": [
+      {
+        "id": "m1",
+        "date": "2025-06-01T16:00",
+        "notes": "První schůzka v roce! Seznámení se stezkou.",
+        "attendance": {},
+        "photos": [],
+        "albumUrl": "https://photos.app.goo.gl/yoqtdFEe9Us46bB39",
+        "articles": []
+      }
+    ],
+    "bonuses": [],
+    "flappyScores": [],
+    "playTimes": []
+  },
+  "scouts": [
+    {
+      "id": "1",
+      "name": "Jan Nová",
+      "nickname": "Kofola",
+      "avatar": " foxes",
+      "role": "user",
+      "pointsByLevel": { "zeme": 0, "voda": 0, "vzduch": 0, "ohen": 0 },
+      "activitiesProgress": {},
+      "activityCompletionDates": {},
+      "completedActivities": [],
+      "password": "1234",
+      "mustChangePassword": true,
+      "unlockedLevels": ["zeme"]
+    },
+    {
+      "id": "2",
+      "name": "Petr Svoboda",
+      "nickname": "Vlk",
+      "avatar": "🐺",
+      "role": "user",
+      "pointsByLevel": { "zeme": 0 },
+      "activitiesProgress": {},
+      "activityCompletionDates": {},
+      "completedActivities": [],
+      "password": "1234",
+      "mustChangePassword": true,
+      "unlockedLevels": ["zeme"]
+    },
+    {
+      "id": "3",
+      "name": "Anna Černá",
+      "nickname": "Sýkorka",
+      "avatar": "🐦",
+      "role": "user",
+      "pointsByLevel": { "zeme": 0 },
+      "activitiesProgress": {},
+      "activityCompletionDates": {},
+      "completedActivities": [],
+      "password": "1234",
+      "mustChangePassword": true,
+      "unlockedLevels": ["zeme"]
+    }
+  ],
+  "trailLevels": [
+    {
+      "id": "zeme",
+      "name": "Cesta Země",
+      "color": "#3b5a3b",
+      "icon": "🌱",
+      "areas": [
+        {
+          "id": "zeme_znam",
+          "title": "Co umím a znám",
+          "icon": "💡",
+          "subcategories": [
+            {
+              "title": "1. Praktický život",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_1_v1", "title": "Pořádek ve stanu", "description": "Po celou dobu tábora si budu udržovat pořádek a přehled ve svém stanu.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_1_v2", "title": "Údržba oblečení", "description": "Budu si udržovat své oblečení a boty čisté a srovnané.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_1_v3", "title": "Úklid v pokoji", "description": "Pravidelně si budu uklízet ve svém pokoji.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_1_v4", "title": "Hygienické návyky", "description": "Dodržuji základní hygienické návyky.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_1_v5", "title": "Cesta veřejnou dopravou", "description": "Bez dohledu dospělého dojedu na určené místo veřejnou dopravou.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_1_v6", "title": "Jízdenka pro družinu", "description": "Koupím pro družinu jízdenku na vlak nebo autobus.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_1_v7", "title": "Informace telefonem", "description": "Zjistím zadanou informaci telefonátem.", "isMandatory": false, "pointsValue": 10 }
+              ]
+            },
+            {
+              "title": "2. Buď připraven",
+              "requiredOptionalCount": 3,
+              "activities": [
+                { "id": "zeme_2_p1", "title": "Přivolání první pomoci", "description": "Vyzkouším si správné přivolání první pomoci (simulovaný hovor).", "isMandatory": true, "pointsValue": 10 },
+                { "id": "zeme_2_p2", "title": "Ošetření zranění", "description": "Prakticky ošetřím základní zranění: krvácení, popálenina, zlomenina, klíště.", "isMandatory": true, "pointsValue: 10 },
+                { "id": "zeme_2_v1", "title": "Pozice na mapě", "description": "Naleznu na mapě svoji pozici.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_2_v2", "title": "Extrémní podmínky", "description": "Správně se obléknu do extrémních podmínek.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_2_v3", "title": "Plánek místa", "description": "Nakreslím plánek místa.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_2_v4", "title": "Hra Buď připraven", "description": "Projdu internetovou hru Buď připraven.", "isMandatory": false, "pointsValue": 10 }
+              ]
+            },
+            {
+              "title": "3. Fyzická zdatnost",
+              "requiredOptionalCount": 2,
+              "activities": [
+                { "id": "zeme_3_p1", "title": "Plavání 50m", "description": "Uplavu bez přestávky 50 metrů.", "isMandatory": true, "pointsValue": 10 },
+                { "id": "zeme_3_p2", "title": "Aktivní pohyb", "description": "Mám alespoň 30 minut aktivního pohybu denně.", "isMandatory": true, "pointsValue": 10 },
+                { "id": "zeme_3_v1", "title": "Kolo 40km", "description": "Ujedu na kole během jednoho dne alespoň 40 kilometrů.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_3_v2", "title": "Ranní otužování", "description": "Pravidelně se ráno otužuji.", "isMandatory": false, "pointsValue": 10 }
+              ]
+            },
+            {
+              "title": "4. Hledání řešení",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_4_v1", "title": "Osobní údaje", "description": "Prokážu, že znám druhy osobních údajů, které se dají zneužít.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_4_v2", "title": "Práce s encyklopedií", "description": "Vyhledám 5 odpovědí v encyklopediích.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_4_v3", "title": "Atlas a souhvězdí", "description": "Pomocí atlasu určím souhvězdí.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_4_v4", "title": "Vaření podle kuchařky", "description": "Uvařím nové jídlo podle kuchařky.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_4_v5", "title": "Cizí slova", "description": "Vyhledám významy 5 cizích slov.", "isMandatory": false, "pointsValue": 10 }
+              ]
+            },
+            {
+              "title": "5. Vyjadřování",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_5_v1", "title": "Reklama na družinu", "description": "Vymyslím reklamu na družinovou nebo oddílovou akci.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_5_v2", "title": "Článek do časopisu", "description": "Napíšu článek do oddílového časopisu.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_5_v3", "title": "Vysvětlení pravidel", "description": "Vysvětlím pravidla hry ostatním.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_5_v4", "title": "Představení koníčku", "description": "Představím svůj koníček.", "isMandatory": false, "pointsValue": 10 }
+              ]
+            },
+            {
+              "title": "6. Zručnost",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_6_v1", "title": "Balení na výpravu", "description": "Na výpravy si správně sbalím batoh.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_6_v2", "title": "Výroba jedné věci", "description": "Vyrobím jednu věc.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_6_v3", "title": "Výtvarné zachycení", "description": "Výtvarně zachytím jednu věc (foto, video).", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_6_v4", "title": "Rukodělná technika", "description": "Vyzkouším novou rukodělnou techniku.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_6_v5", "title": "Obal na kamínky", "description": "Vyrobím si obal na kamínky Sacculus.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_6_v6", "title": "Turbánek", "description": "Umím uvázat turbánek.", "isMandatory": false, "pointsValue": 10 }
+              ]
+            },
+            {
+              "title": "7. Můj oddíl",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_7_v1", "title": "Aktivity oddílu", "description": "Aktivity specifické pro zaměření našeho oddílu.", "isMandatory": false, "pointsValue": 10 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zeme_jsem",
+          "title": "Kdo jsem",
+          "icon": "👤",
+          "subcategories": [
+            {
+              "title": "8. Já a můj život",
+              "requiredOptionalCount": 2,
+              "activities": [
+                { "id": "zeme_8_p1", "title": "Tiché soustředění", "description": "Zlepším se ve schopnosti tiše se soustředit na to, jak na mě působí věci a lidé.", "isMandatory": true, "pointsValue": 15 },
+                { "id": "zeme_8_v1", "title": "Přemáhání nálad", "description": "Zlepším se v přemáhání špatných nálad.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_8_v2", "title": "Skaut je veselé mysli", "description": "Vysvětlím bod zákona \"Skaut je veselé mysli\".", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_8_v3", "title": "Bajky a poučení", "description": "Přečtu si tři bajky a zapíšu ponaučení.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_8_v4", "title": "Přírodní detaily", "description": "Připravím stezku s 5 přírodními detaily.", "isMandatory": false, "pointsValue": 10 }
+              ]
+            },
+            {
+              "title": "9. Moje svědomí",
+              "requiredOptionalCount": 2,
+              "activities": [
+                { "id": "zeme_9_p1", "title": "Slib a zákon", "description": "Rozumím skautskému slibu a zákonu.", "isMandatory": true, "pointsValue": 15 },
+                { "id": "zeme_9_v1", "title": "Záznam plnění", "description": "Zaznamenám si, zda plním, co slíbím.", "isMandatory": false, "pointsValue": 10 },
+                { "id": "zeme_9_v2", "title": "Uznání chyby", "description": "Uznám svou chybu a najdu v ní poučení.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_9_v3", "title": "Měsíc Modrý život", "description": "Měsíc dodržuji Modrý život.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            },
+            {
+              "title": "10. Osobní rozvoj",
+              "requiredOptionalCount": 2,
+              "activities": [
+                { "id": "zeme_10_p1", "title": "Půst od něčeho", "description": "Vyberu si: 14 dní bez TV, měsíc bez sladkostí, 14 dní bez her nebo měsíc bez výtahu.", "isMandatory": true, "pointsValue": 15 },
+                { "id": "zeme_10_v1", "title": "Program schůzky", "description": "Připravím část programu schůzky.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_10_v2", "title": "Sledování nedostatku", "description": "Sleduj svůj nedostatek (lenost) a jak ho zvládáš.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_10_v3", "title": "Doporučení knihy", "description": "Přečtu doporučenou knihu.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_10_v4", "title": "Koncert/výstava", "description": "Navštívím koncert nebo výstavu.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zeme_kamarad",
+          "title": "Můj kamarád",
+          "icon": "🤝",
+          "subcategories": [
+            {
+              "title": "11. Vztahy mezi lidmi",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_11_p1", "title": "Přátelská atmosféra", "description": "Budu lidi kolem sebe poznávat a přispívat k přátelské atmosféře.", "isMandatory": true, "pointsValue": 15 },
+                { "id": "zeme_11_v1", "title": "Hra Skřítci", "description": "Hra Skřítci (tajná pomoc).", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_11_v2", "title": "Snesení nepříjemného", "description": "Dokážu snést něco nepříjemného pro dobro druhých.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_11_v3", "title": "Díla o přátelství", "description": "Najdu 10 děl o přátelství.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            },
+            {
+              "title": "12. Moje vztahy",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_12_v1", "title": "Kamarádi a přátelství", "description": "Sepíšu své kamarády a čím jsem přispěl k přátelství.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_12_v2", "title": "Omluva při nestíhání", "description": "Omluvím se, když nestíhám sliby.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_12_v3", "title": "Hovor o pubertě", "description": "Zjistím co je to puberta a proberu to s dospělým.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_12_v4", "title": "Spolupráce kluci/holky", "description": "Zúčastním se akce, kde spolupracují kluci a holky.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            },
+            {
+              "title": "13. Komunikace",
+              "requiredOptionalCount": 2,
+              "activities": [
+                { "id": "zeme_13_p1", "title": "Zpětná vazba", "description": "Zeptám se rodičů a vůdce, co se jim na mém jednání líbí a co ne.", "isMandatory": true, "pointsValue": 15 },
+                { "id": "zeme_13_v1", "title": "Neskákání do řeči", "description": "Zlepším se v neskakání do řeči.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_13_v2", "title": "Omluva za ublížení", "description": "Dokážu se omluvit, když ublížím.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_13_v3", "title": "Předání instrukcí", "description": "Pětkrát srozumitelně předám instrukce.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_13_v4", "title": "Konflikty v okolí", "description": "Zjistím příčiny konfliktů v okolí.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            },
+            {
+              "title": "14. Pomoc druhým",
+              "requiredOptionalCount": 2,
+              "activities": [
+                { "id": "zeme_14_p1", "title": "Všímání si potřeb", "description": "Budu si všímat drobných potřeb druhých (dveře, podání předmětu).", "isMandatory": true, "pointsValue": 15 },
+                { "id": "zeme_14_v1", "title": "Pomoc útulku/seniorům", "description": "Pomoc útulku nebo seniorům.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_14_v2", "title": "Betlémské světlo", "description": "Roznášení Betlémského světla.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_14_v3", "title": "Přehled o pomoci", "description": "Měsíc si vedu přehled o pomoci druhým.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zeme_domov",
+          "title": "Můj domov",
+          "icon": "🏠",
+          "subcategories": [
+            {
+              "title": "15. Moje rodina",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_15_v1", "title": "Vyprávění o dětství", "description": "Poprosím předky o vyprávění o dětství.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_15_v2", "title": "Vysvětlení názorů", "description": "Dokážu rodičům vysvětlit své názory.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_15_v3", "title": "Pomoc doma", "description": "Budu pravidelně doma pomáhat.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_15_v4", "title": "Radost překvapením", "description": "Udělám rodičům radost překvapením.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            },
+            {
+              "title": "16. Naše parta",
+              "requiredOptionalCount": 2,
+              "activities": [
+                { "id": "zeme_16_v1", "title": "Společná akce", "description": "Naplánujeme a vyrazíme na společnou akci.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_16_v2", "title": "Všímání si osamělých", "description": "Všímám si osamělých a snažím se s nimi kamarádit.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_16_v3", "title": "Zábava v oddíle", "description": "Popíšu vůdci co mě v oddíle baví.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_16_v4", "title": "Činnost na dlouhé chvíle", "description": "Vymyslím činnost na dlouhé chvíle.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            },
+            {
+              "title": "17. Družina jako tým",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_17_v1", "title": "Nabídka dovedností", "description": "Sepíšu, co mohu nabídnout své družině.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_17_v2", "title": "Vysvětlení role", "description": "Vysvětlím svou roli v družině.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_17_v3", "title": "Přírava na akci", "description": "Připravím svou družinu na akci.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zeme_svet",
+          "title": "Svět okolo nás",
+          "icon": "🌍",
+          "subcategories": [
+            {
+              "title": "18. Já a demokracie",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_18_v1", "title": "Práva a povinnosti", "description": "Ujasním si svá práva a povinnosti v oddíle.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_18_v2", "title": "Základní lidská práva", "description": "Zjistím 5 základních lidských práv.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_18_v3", "title": "Dodržování pravidel", "description": "Zhodnotím dodržování pravidel her.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            },
+            {
+              "title": "19. Já občan",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_19_v1", "title": "Osobnosti města", "description": "Zjistím údaje o důležité osobnosti našeho města.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_19_v2", "title": "Obecní úřad", "description": "Ukážu, kde je obecní úřad a co se tam děje.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_19_v3", "title": "Obecní vyhláška", "description": "Zjistím, jak se v obci platí za psa a třídí odpad.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            },
+            {
+              "title": "20. Propojený svět",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_20_v1", "title": "Původ zeleniny", "description": "Zjistím z jakých zemí pochází zelenina v obchodě.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_20_v2", "title": "Můj den a svět", "description": "Co z denních věcí je vyrobeno z ropy.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_20_v3", "title": "Fair Trade", "description": "Zjistím co je to Fair Trade.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_20_v4", "title": "Původ oblečení", "description": "Zjistím původ mého oblečení.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            },
+            {
+              "title": "21. Různost světa",
+              "requiredOptionalCount": 2,
+              "activities": [
+                { "id": "zeme_21_p1", "title": "Respekt k odlišnosti", "description": "Nebudu se posmívat ostatním za jejich odlišnost, vzhled či původ.", "isMandatory": true, "pointsValue: 15 },
+                { "id": "zeme_21_v1", "title": "Cizí písně", "description": "Poslechnu si 3 písně v cizích jazycích a najdu překlad.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_21_v2", "title": "Jiné národnosti", "description": "Navštívím památky jiné národnosti.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_21_v3", "title": "Mezinárodní akce", "description": "Účast na mezinárodní akci.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            },
+            {
+              "title": "22. Příběhy světa",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_22_v1", "title": "Kulturní památky", "description": "Vytvořím s družinou mapu kulturních památek.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_22_v2", "title": "Hry prarodičů", "description": "Zjistím, s čím si hráli prarodiče.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_22_v3", "title": "Staré bydliště", "description": "Najdu své bydliště na mapě staré 50 let.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_22_v4", "title": "Tradiční akce", "description": "Účast na tradiční akci v obci.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zeme_priroda",
+          "title": "Příroda kolem nás",
+          "icon": "🌳",
+          "subcategories": [
+            {
+              "title": "23. Pobyt v přírodě",
+              "requiredOptionalCount": 2,
+              "activities": [
+                { "id": "zeme_23_p1", "title": "Rozdělání ohně", "description": "Rozdělám oheň na ohništi, které sám postavím a pak jej správně zahladím.", "isMandatory": true, "pointsValue: 15 },
+                { "id": "zeme_23_v1", "title": "Účast na výpravách", "description": "Nevynechám čtyři výpravy a budu správně sbalen.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_23_v2", "title": "Jedovaté rostliny", "description": "Najdu jedovaté rostliny a houby.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_23_v3", "title": "Vedení s mapou", "description": "Povedu část výpravy pomocí mapy.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            },
+            {
+              "title": "24. Vnímání přírody",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_24_v1", "title": "Podobné stromy", "description": "Najdu dva podobné stromy a popíšu rozdíly.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_24_v2", "title": "Umělecké zobrazení", "description": "Umělecky zobrazím přírodu.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_24_v3", "title": "Kniha o přírodě", "description": "Přečtu si knihu o přírodě (Seton, London).", "isMandatory": false, "pointsValue: 10 }
+              ]
+            },
+            {
+              "title": "25. Poznávaní přírody",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_25_v1", "title": "Poznávání druhů", "description": "Naučím se poznávat nové druhy (počet dle vedoucího).", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_25_v2", "title": "Organismy a role", "description": "Najdu 10 organismů a popíšu jejich roli.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_25_v3", "title": "Nová souhvězdí", "description": "Najdu 3 známá a 3 nová souhvězdí.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            },
+            {
+              "title": "26. Hodnota přírody",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_26_v1", "title": "Pořádek na tábořišti", "description": "Budu udržovat pořádek na tábořišti.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_26_v2", "title": "Starost o zahradu", "description": "Starost o zahradu, květinu nebo zvíře.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_26_v3", "title": "Místo v přírodě", "description": "Vliv člověka na vzhled konkrétního místa.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_26_v4", "title": "Výrobek z přírodnin", "description": "Výrobek z přírodnin.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            },
+            {
+              "title": "27. Šetrné chování",
+              "requiredOptionalCount": 1,
+              "activities": [
+                { "id": "zeme_27_v1", "title": "Pokus s rozkladem", "description": "Pokus s rozkladem odpadu pod zemí.", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_27_v2", "title": "Popis procesu jídla", "description": "Popíšu proces zpracování jídla (pole-obchod).", "isMandatory": false, "pointsValue: 10 },
+                { "id": "zeme_27_v3", "title": "Třídění odpadu", "description": "3 měsíce poctivě třídím odpad doma.", "isMandatory": false, "pointsValue: 10 }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    { "id": "voda", "name": "Cesta Vody", "color": "#0077b6", "icon": "💧", "areas": [] },
+    { "id": "vzduch", "name": "Cesta Vzduchu", "color": "#f59e0b", "icon": "☁️", "areas": [] },
+    { "id": "ohen", "name": "Cesta Ohně", "color": "#dc2626", "icon": "🔥", "areas": [] }
+  ]
+}

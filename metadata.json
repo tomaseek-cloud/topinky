@@ -1,0 +1,7 @@
+{
+  "name": "api TopTopinki",
+  "description": "Prostě megaultracool appka",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
