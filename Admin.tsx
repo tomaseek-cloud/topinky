@@ -1,10 +1,9 @@
 
 // Fix: Migrated all points calculations and object creation to use the level-specific pointsByLevel and added required levelId fields.
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-// Fix: Added UserRole to imports
-import { AppSettings, Game, Scout, Area, Activity, Meeting, AttendanceStatus, Bonus, GameResult, GameTeam, MeetingTeam, UserRole } from './types';
+import { AppSettings, Game, Scout, Area, Activity, Meeting, AttendanceStatus, Bonus, GameResult, GameTeam, MeetingTeam, Subcategory, Article, UserRole } from '../types';
 import { QRCodeSVG } from 'qrcode.react';
-import { ALL_AVATARS } from './constants';
+import { ALL_AVATARS, DEFAULT_ALBUM_URL } from '../constants';
 
 interface Props {
   settings: AppSettings;
@@ -15,6 +14,7 @@ interface Props {
   onUpdateScouts: (scouts: Scout[]) => void;
   stezkaAreas: Area[];
   onUpdateStezka: (areas: Area[]) => void;
+  userRole: UserRole | null;
 }
 
 const Admin: React.FC<Props> = ({ 
@@ -25,9 +25,10 @@ const Admin: React.FC<Props> = ({
   scouts, 
   onUpdateScouts,
   stezkaAreas,
-  onUpdateStezka
+  onUpdateStezka,
+  userRole
 }) => {
-  const [activeAdminTab, setActiveAdminTab] = useState<'qr' | 'meetings' | 'users' | 'tasks' | 'content'>('qr');
+  const [activeAdminTab, setActiveAdminTab] = useState<'qr' | 'meetings' | 'users' | 'tasks' | 'content' | 'chronicle'>('qr');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [qrCodeValue, setQrCodeValue] = useState('');
@@ -36,18 +37,19 @@ const Admin: React.FC<Props> = ({
   const [expandedTaskAreaId, setExpandedTaskAreaId] = useState<string | null>(null);
   const [expandedSignAreaId, setExpandedSignAreaId] = useState<string | null>(null);
 
-  const [deleteConfig, setDeleteConfig] = useState<{ type: string; id: string; title: string; message: string } | null>(null);
+  const [deleteConfig, setDeleteConfig] = useState<{ type: string; id: string; title: string; message: string; extra?: any } | null>(null);
   const [editingScout, setEditingScout] = useState<Scout | null>(null);
   const [signingScout, setSigningScout] = useState<Scout | null>(null);
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
   const [editingActivity, setEditingActivity] = useState<{areaId: string, subIdx: number, activity: Activity} | null>(null);
+  const [editingSubcategory, setEditingSubcategory] = useState<{areaId: string, subIdx: number, title: string} | null>(null);
+  const [editingArea, setEditingArea] = useState<{id: string, title: string, icon: string} | null>(null);
   
   const [gameModal, setGameModal] = useState<{meetingId: string, game?: Game} | null>(null);
   const [bulkTaskModal, setBulkTaskModal] = useState<{meetingId: string} | null>(null);
   const [teamRandomizeModal, setTeamRandomizeModal] = useState<{meetingId: string} | null>(null);
   const [bonusModal, setBonusModal] = useState<{meetingId: string} | null>(null);
 
-  // Form states
   const [gameForm, setGameForm] = useState<{
     name: string, 
     type: 'individual' | 'team', 
@@ -58,7 +60,6 @@ const Admin: React.FC<Props> = ({
   const [bulkTaskForm, setBulkTaskForm] = useState({ taskId: '', selectedScouts: [] as string[] });
   const [bonusForm, setBonusForm] = useState({ scoutId: '', points: 5, reason: '' });
 
-  // Fix safeSettings initialization to include all required AppSettings properties including activeLevelId
   const safeSettings: AppSettings = settings || {
     meetings: [],
     leaderSecret: '',
@@ -75,13 +76,12 @@ const Admin: React.FC<Props> = ({
     bonuses: [],
     flappyScores: [],
     playTimes: [],
-    activeLevelId: 'zeme'
+    activeLevelId: 'zeme',
+    showTotalLeaderboard: false
   };
 
-  // Define activeLevelId for use in points calculations and object creation
   const activeLevelId = safeSettings.activeLevelId;
 
-  // Seznam úkolů čekajících na podpis (stav 'done')
   const pendingApprovals = useMemo(() => {
     const list: { scout: Scout; activity: Activity; area: Area }[] = [];
     scouts.forEach(s => {
@@ -100,6 +100,18 @@ const Admin: React.FC<Props> = ({
     });
     return list;
   }, [scouts, stezkaAreas]);
+
+  const allArticles = useMemo(() => {
+    const articles: { article: Article, meeting: Meeting }[] = [];
+    safeSettings.meetings.forEach(m => {
+      if (m.articles) {
+        m.articles.forEach(a => {
+          articles.push({ article: a, meeting: m });
+        });
+      }
+    });
+    return articles.sort((a, b) => new Date(b.article.timestamp).getTime() - new Date(a.article.timestamp).getTime());
+  }, [safeSettings.meetings]);
 
   useEffect(() => {
     if (!safeSettings.leaderSecret) return;
@@ -161,7 +173,6 @@ const Admin: React.FC<Props> = ({
     event.target.value = ''; 
   };
 
-  // Fix: Toggle signature using level-specific pointsByLevel
   const toggleScoutTaskSignature = (scoutId: string, taskId: string) => {
     const scout = scouts.find(s => s.id === scoutId);
     if (!scout) return;
@@ -169,7 +180,6 @@ const Admin: React.FC<Props> = ({
     const isSigned = scout.activitiesProgress[taskId] === 'signed';
     let pts = 10;
     
-    // Najít hodnotu bodů pro úkol
     stezkaAreas.forEach(a => a.subcategories.forEach(sub => {
       const act = sub.activities.find(x => x.id === taskId);
       if (act) {
@@ -178,23 +188,25 @@ const Admin: React.FC<Props> = ({
     }));
 
     const newProgress = { ...scout.activitiesProgress };
+    const newCompletionDates = { ...scout.activityCompletionDates };
     const newPointsByLevel = { ...scout.pointsByLevel };
     const currentPoints = newPointsByLevel[activeLevelId] || 0;
 
     if (isSigned) {
       delete newProgress[taskId];
+      delete newCompletionDates[taskId];
       newPointsByLevel[activeLevelId] = Math.max(0, currentPoints - pts);
     } else {
       newProgress[taskId] = 'signed';
+      newCompletionDates[taskId] = new Date().toISOString();
       newPointsByLevel[activeLevelId] = currentPoints + pts;
     }
 
-    const updatedScouts = scouts.map(s => s.id === scoutId ? { ...s, pointsByLevel: newPointsByLevel, activitiesProgress: newProgress } : s);
+    const updatedScouts = scouts.map(s => s.id === scoutId ? { ...s, pointsByLevel: newPointsByLevel, activitiesProgress: newProgress, activityCompletionDates: newCompletionDates } : s);
     onUpdateScouts(updatedScouts);
     
-    // Aktualizovat i lokální stav pro modal, pokud je otevřený
     if (signingScout && signingScout.id === scoutId) {
-      setSigningScout({ ...signingScout, pointsByLevel: newPointsByLevel, activitiesProgress: newProgress });
+      setSigningScout({ ...signingScout, pointsByLevel: newPointsByLevel, activitiesProgress: newProgress, activityCompletionDates: newCompletionDates });
     }
   };
 
@@ -279,7 +291,105 @@ const Admin: React.FC<Props> = ({
     setEditingActivity(null);
   };
 
-  // Fix: Add levelId to Game object and update points using level-specific pointsByLevel
+  const saveSubcategoryEdit = () => {
+    if (!editingSubcategory) return;
+    const { areaId, subIdx, title } = editingSubcategory;
+    onUpdateStezka(stezkaAreas.map(area => {
+      if (area.id !== areaId) return area;
+      const newSubs = [...area.subcategories];
+      newSubs[subIdx] = { ...newSubs[subIdx], title };
+      return { ...area, subcategories: newSubs };
+    }));
+    setEditingSubcategory(null);
+  };
+
+  const saveAreaEdit = () => {
+    if (!editingArea) return;
+    onUpdateStezka(stezkaAreas.map(area => {
+      if (area.id !== editingArea.id) return area;
+      return { ...area, title: editingArea.title, icon: editingArea.icon };
+    }));
+    setEditingArea(null);
+  };
+
+  const addNewArea = () => {
+    const newArea: Area = {
+      id: `area_${Date.now()}`,
+      title: 'Nová oblast',
+      icon: '🌲',
+      subcategories: []
+    };
+    onUpdateStezka([...stezkaAreas, newArea]);
+  };
+
+  const deleteArea = (areaId: string) => {
+    onUpdateStezka(stezkaAreas.filter(a => a.id !== areaId));
+  };
+
+  const addNewSubcategory = (areaId: string) => {
+    onUpdateStezka(stezkaAreas.map(area => {
+      if (area.id !== areaId) return area;
+      const newSub: Subcategory = {
+        title: 'Nová kapitola',
+        requiredOptionalCount: 1,
+        activities: []
+      };
+      return { ...area, subcategories: [...area.subcategories, newSub] };
+    }));
+  };
+
+  const deleteSubcategory = (areaId: string, subIdx: number) => {
+    onUpdateStezka(stezkaAreas.map(area => {
+      if (area.id !== areaId) return area;
+      const newSubs = area.subcategories.filter((_, idx) => idx !== subIdx);
+      return { ...area, subcategories: newSubs };
+    }));
+  };
+
+  const addNewActivity = (areaId: string, subIdx: number) => {
+    onUpdateStezka(stezkaAreas.map(area => {
+      if (area.id !== areaId) return area;
+      const newSubs = [...area.subcategories];
+      const newActivity: Activity = {
+        id: `custom_${activeLevelId}_${Date.now()}`,
+        title: 'Nový úkol',
+        description: 'Popis nového úkolu...',
+        isMandatory: false,
+        pointsValue: 5
+      };
+      newSubs[subIdx] = { 
+        ...newSubs[subIdx], 
+        activities: [...newSubs[subIdx].activities, newActivity] 
+      };
+      return { ...area, subcategories: newSubs };
+    }));
+  };
+
+  const deleteActivity = (areaId: string, subIdx: number, activityId: string) => {
+    onUpdateStezka(stezkaAreas.map(area => {
+      if (area.id !== areaId) return area;
+      const newSubs = [...area.subcategories];
+      newSubs[subIdx] = { 
+        ...newSubs[subIdx], 
+        activities: newSubs[subIdx].activities.filter(a => a.id !== activityId) 
+      };
+      return { ...area, subcategories: newSubs };
+    }));
+  };
+
+  const deleteArticle = (meetingId: string, articleId: string) => {
+    const updatedMeetings = safeSettings.meetings.map(m => {
+      if (m.id === meetingId) {
+        return {
+          ...m,
+          articles: (m.articles || []).filter(a => a.id !== articleId)
+        };
+      }
+      return m;
+    });
+    onUpdateSettings({ ...safeSettings, meetings: updatedMeetings });
+  };
+
   const saveGame = () => {
     if (!gameModal || !gameForm.name) return;
     
@@ -296,7 +406,6 @@ const Admin: React.FC<Props> = ({
       onUpdateGames([...games, newGame]);
     }
 
-    // Award points to scouts for the current level
     if (gameForm.type === 'individual') {
       onUpdateScouts(scouts.map(s => {
         const oldPts = gameModal.game?.results.find(r => r.scoutId === s.id)?.pointsGained || 0;
@@ -322,7 +431,6 @@ const Admin: React.FC<Props> = ({
     setGameModal(null);
   };
 
-  // Fix: Add levelId to Bonus object and update points using level-specific pointsByLevel
   const saveBonus = () => {
     if (!bonusModal || !bonusForm.scoutId) return;
     const newBonus: Bonus = {
@@ -347,7 +455,6 @@ const Admin: React.FC<Props> = ({
     setBonusForm({ scoutId: '', points: 5, reason: '' });
   };
 
-  // Fix: Update attendance points using level-specific pointsByLevel
   const updateAttendance = (meetingId: string, scoutId: string, status: AttendanceStatus) => {
     const meeting = safeSettings.meetings.find(m => m.id === meetingId);
     if (!meeting) return;
@@ -378,10 +485,25 @@ const Admin: React.FC<Props> = ({
 
   const confirmDeleteAction = () => {
     if (!deleteConfig) return;
-    const { type, id } = deleteConfig;
+    const { type, id, extra } = deleteConfig;
+    
+    // Pojistka: Vedoucí nemůže mazat adminy
+    if (type === 'scout' && userRole === 'leader') {
+      const target = scouts.find(s => s.id === id);
+      if (target?.role === 'admin') {
+        alert("Vedoucí nemůže smazat administrátora.");
+        setDeleteConfig(null);
+        return;
+      }
+    }
+
     if (type === 'scout') onUpdateScouts(scouts.filter(s => s.id !== id));
     if (type === 'meeting') onUpdateSettings({ ...safeSettings, meetings: safeSettings.meetings.filter(m => m.id !== id) });
     if (type === 'game') onUpdateGames(games.filter(g => g.id !== id));
+    if (type === 'activity' && extra) deleteActivity(extra.areaId, extra.subIdx, id);
+    if (type === 'subcategory' && extra) deleteSubcategory(extra.areaId, id as any);
+    if (type === 'area') deleteArea(id);
+    if (type === 'article' && extra) deleteArticle(extra.meetingId, id);
     setDeleteConfig(null);
   };
 
@@ -423,6 +545,38 @@ const Admin: React.FC<Props> = ({
     setGameForm({ ...gameForm, teams: gameTeams, results });
   };
 
+  const handleSaveScoutProfile = () => {
+    if (!editingScout) return;
+
+    const trimmedNickname = editingScout.nickname.trim();
+    if (!trimmedNickname) {
+      alert("Přezdívka nesmí být prázdná.");
+      return;
+    }
+
+    const isDuplicate = scouts.some(s => 
+      s.id !== editingScout.id && 
+      s.nickname.toLowerCase() === trimmedNickname.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      alert(`Přezdívka "${trimmedNickname}" již existuje. Vyber prosím jinou.`);
+      return;
+    }
+
+    // Pouze admin může nastavit roli admin
+    if (userRole === 'leader' && editingScout.role === 'admin') {
+      const original = scouts.find(s => s.id === editingScout.id);
+      if (original?.role !== 'admin') {
+        alert("Vedoucí nemůže povýšit člena na administrátora.");
+        return;
+      }
+    }
+
+    onUpdateScouts(scouts.map(s => s.id === editingScout.id ? { ...editingScout, nickname: trimmedNickname } : s));
+    setEditingScout(null);
+  };
+
   return (
     <div className="p-6 space-y-8 pb-32 animate-fadeIn text-black">
       <input type="file" ref={fileInputRef} onChange={importAllData} accept=".json" className="hidden" />
@@ -435,6 +589,7 @@ const Admin: React.FC<Props> = ({
              {id: 'users', label: '👥 Členové'}, 
              {id: 'meetings', label: '📅 Akce'}, 
              {id: 'tasks', label: '🧭 Úkoly'}, 
+             {id: 'chronicle', label: '📖 Kronika'},
              {id: 'content', label: '🛠️ Obsah'} 
            ].map(tab => (
              <button key={tab.id} onClick={() => setActiveAdminTab(tab.id as any)} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shrink-0 ${activeAdminTab === tab.id ? 'bg-[#3b5a3b] text-white shadow-lg' : 'bg-white text-gray-400 border border-gray-100'}`}>{tab.label}</button>
@@ -449,23 +604,31 @@ const Admin: React.FC<Props> = ({
             const isExpanded = expandedTaskAreaId === area.id;
             return (
               <div key={area.id} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-                <button onClick={() => setExpandedTaskAreaId(isExpanded ? null : area.id)} className="w-full p-6 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
-                  <div className="flex items-center gap-4">
+                <div className="w-full flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+                  <button onClick={() => setExpandedTaskAreaId(isExpanded ? null : area.id)} className="flex-1 p-6 flex items-center gap-4 text-left">
                     <span className="text-3xl">{area.icon}</span>
                     <div className="text-left">
                       <h4 className="text-sm font-black text-gray-800 uppercase tracking-widest">{area.title}</h4>
                       <p className="text-[9px] text-gray-400 font-bold uppercase">{area.subcategories.length} kapitol</p>
                     </div>
+                  </button>
+                  <div className="flex gap-2 pr-6">
+                    <button onClick={() => setEditingArea({ id: area.id, title: area.title, icon: area.icon })} className="p-2 bg-gray-50 rounded-lg border border-gray-100 text-[#3b5a3b]">✏️</button>
+                    <button onClick={() => setDeleteConfig({ type: 'area', id: area.id, title: 'Smazat oblast?', message: `Opravdu smazat celou oblast "${area.title}" i se všemi úkoly?` })} className="p-2 bg-red-50 rounded-lg border border-red-100 text-red-500">🗑️</button>
+                    <button onClick={() => setExpandedTaskAreaId(isExpanded ? null : area.id)} className={`p-2 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>▼</button>
                   </div>
-                  <span className={`text-[#3b5a3b] text-xs transition-transform ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
-                </button>
+                </div>
                 
                 {isExpanded && (
                   <div className="px-6 pb-6 space-y-6 bg-gray-50/30 border-t border-gray-50 animate-fadeIn">
                     {area.subcategories.map((sub, sIdx) => (
                       <div key={sIdx} className="space-y-3 pt-4">
                         <div className="flex items-center justify-between border-b pb-1">
-                          <h5 className="text-[10px] font-black text-[#3b5a3b] uppercase tracking-[0.1em]">{sub.title}</h5>
+                          <div className="flex items-center gap-2">
+                             <h5 className="text-[10px] font-black text-[#3b5a3b] uppercase tracking-[0.1em]">{sub.title}</h5>
+                             <button onClick={() => setEditingSubcategory({ areaId: area.id, subIdx: sIdx, title: sub.title })} className="text-[8px] opacity-30 hover:opacity-100 transition-opacity">✏️</button>
+                             <button onClick={() => setDeleteConfig({ type: 'subcategory', id: sIdx.toString(), title: 'Smazat kapitolu?', message: `Opravdu smazat kapitolu "${sub.title}"?`, extra: { areaId: area.id } })} className="text-[8px] opacity-30 hover:opacity-100 text-red-500 transition-opacity">🗑️</button>
+                          </div>
                           <div className="flex items-center gap-2">
                             <span className="text-[8px] text-gray-400 font-bold uppercase">Cíl:</span>
                             <input 
@@ -486,25 +649,95 @@ const Admin: React.FC<Props> = ({
                               </div>
                               <div className="flex gap-2">
                                 <button onClick={() => toggleActivityMandatory(area.id, sIdx, act.id)} className={`px-2 py-1 rounded-lg text-[8px] font-black border transition-all ${act.isMandatory ? 'bg-[#3b5a3b] text-white border-[#3b5a3b]' : 'bg-gray-50 text-gray-400 border-gray-200'}`}>{act.isMandatory ? 'POV' : 'VOL'}</button>
-                                <button onClick={() => setEditingActivity({areaId: area.id, subIdx: sIdx, activity: {...act}})} className="p-2 bg-gray-50 text-[#3b5a3b] rounded-lg border">✏️</button>
+                                <button onClick={() => setEditingActivity({areaId: area.id, subIdx: sIdx, activity: {...act}})} className="p-2 bg-gray-50 text-[#3b5a3b] rounded-lg border border-gray-200">✏️</button>
+                                <button onClick={() => setDeleteConfig({ type: 'activity', id: act.id, title: 'Smazat úkol?', message: `Opravdu smazat úkol "${act.title}"?`, extra: { areaId: area.id, subIdx: sIdx } })} className="p-2 bg-red-50 text-red-500 rounded-lg border border-red-100">🗑️</button>
                               </div>
                             </div>
                           ))}
+                          <button 
+                            onClick={() => addNewActivity(area.id, sIdx)}
+                            className="w-full py-3 mt-2 bg-white border-2 border-dashed border-gray-200 text-gray-400 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:border-[#3b5a3b]/30 hover:text-[#3b5a3b] transition-all"
+                          >
+                            + Přidat nový úkol
+                          </button>
                         </div>
                       </div>
                     ))}
+                    <button 
+                       onClick={() => addNewSubcategory(area.id)}
+                       className="w-full py-4 mt-6 bg-[#3b5a3b]/5 border-2 border-dashed border-[#3b5a3b]/20 text-[#3b5a3b] rounded-[2rem] text-[10px] font-black uppercase tracking-widest hover:bg-[#3b5a3b]/10 transition-all"
+                    >
+                       + Přidat kapitolu
+                    </button>
                   </div>
                 )}
               </div>
             );
           })}
+          <button 
+             onClick={addNewArea}
+             className="w-full py-5 mt-4 bg-white border-2 border-dashed border-gray-300 text-gray-400 rounded-[2.5rem] text-xs font-black uppercase tracking-widest hover:border-[#3b5a3b]/30 hover:text-[#3b5a3b] transition-all flex items-center justify-center gap-3"
+          >
+             <span>✨</span> Přidat novou oblast
+          </button>
+        </div>
+      )}
+
+      {/* 📖 KRONIKA TAB */}
+      {activeAdminTab === 'chronicle' && (
+        <div className="space-y-6 animate-fadeIn">
+          <div className="bg-[#3b5a3b] text-white rounded-[3rem] p-8 shadow-xl relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-10 opacity-10 pointer-events-none text-9xl">📖</div>
+             <h3 className="text-xl font-bold parchment-font relative z-10">Správa kroniky</h3>
+             <p className="text-[10px] opacity-60 uppercase tracking-widest mt-1 relative z-10">Všechny uživatelské zápisy z akcí</p>
+             <div className="mt-6 flex items-baseline gap-2 relative z-10">
+                <span className="text-4xl font-black">{allArticles.length}</span>
+                <span className="text-[10px] font-black uppercase opacity-60">celkem zápisů</span>
+             </div>
+          </div>
+
+          <div className="grid gap-4">
+            {allArticles.length === 0 ? (
+              <div className="bg-white rounded-[2.5rem] p-12 border border-dashed border-gray-200 text-center space-y-4">
+                <div className="text-5xl opacity-20">✍️</div>
+                <p className="text-xs font-bold text-gray-400 uppercase">Zatím nikdo nic nenapsal</p>
+              </div>
+            ) : (
+              allArticles.map(({ article, meeting }) => (
+                <div key={article.id} className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-[10px] font-black text-[#3b5a3b] uppercase tracking-widest">{article.scoutNickname}</h4>
+                      <p className="text-[8px] text-gray-400 font-bold uppercase">{new Date(article.timestamp).toLocaleString('cs-CZ')}</p>
+                    </div>
+                    <div className="text-right">
+                       <p className="text-[8px] font-black text-gray-300 uppercase leading-none">Ke dni:</p>
+                       <p className="text-[10px] font-bold text-gray-600">{new Date(meeting.date).toLocaleDateString('cs-CZ')}</p>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-50 italic text-sm text-gray-700 line-clamp-3">
+                    {article.content}
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest truncate flex-1">Akce: {meeting.notes || 'Beze jména'}</span>
+                    <button 
+                      onClick={() => setDeleteConfig({ type: 'article', id: article.id, title: 'Smazat zápis?', message: `Opravdu smazat zápis od ${article.scoutNickname}?`, extra: { meetingId: meeting.id } })}
+                      className="px-4 py-2 bg-red-50 text-red-500 rounded-xl text-[9px] font-black uppercase tracking-widest border border-red-100 active:scale-95 transition-all"
+                    >
+                      Smazat
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
 
       {/* 📅 AKCE TAB */}
       {activeAdminTab === 'meetings' && (
         <div className="space-y-6">
-          <button onClick={() => onUpdateSettings({...safeSettings, meetings: [{id: Date.now().toString(), date: new Date().toISOString(), notes: 'Nová schůzka', attendance: {}, photos: [], teams: []}, ...safeSettings.meetings]})} className="w-full py-4 bg-[#3b5a3b] text-white rounded-2xl font-black uppercase text-xs shadow-xl">+ Nová akce</button>
+          <button onClick={() => onUpdateSettings({...safeSettings, meetings: [{id: Date.now().toString(), date: new Date().toISOString(), notes: 'Nová schůzka', attendance: {}, photos: [], teams: [], albumUrl: DEFAULT_ALBUM_URL}, ...safeSettings.meetings]})} className="w-full py-4 bg-[#3b5a3b] text-white rounded-2xl font-black uppercase text-xs shadow-xl">+ Nová akce</button>
           <div className="grid gap-4">
             {safeSettings.meetings.map(meeting => (
               <div key={meeting.id} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
@@ -556,21 +789,36 @@ const Admin: React.FC<Props> = ({
       {/* 👥 ČLENOVÉ TAB */}
       {activeAdminTab === 'users' && (
         <div className="space-y-6">
-          <button onClick={() => onUpdateScouts([{id: Date.now().toString(), name: 'Nový skaut', nickname: 'Přezdívka', avatar: '🌲', role: 'user', pointsByLevel: {}, activitiesProgress: {}, activityCompletionDates: {}, completedActivities: [], password: '1234', mustChangePassword: true}, ...scouts])} className="w-full py-4 bg-[#3b5a3b] text-white rounded-2xl font-black uppercase text-xs shadow-xl">+ Nový člen</button>
+          <button onClick={() => {
+            const nickname = 'Nový skaut';
+            const isDuplicate = scouts.some(s => s.nickname.toLowerCase() === nickname.toLowerCase());
+            const finalNickname = isDuplicate ? `Nový skaut ${scouts.length + 1}` : nickname;
+            onUpdateScouts([{id: Date.now().toString(), name: 'Nový skaut', nickname: finalNickname, avatar: '🌲', role: 'user', pointsByLevel: {}, activitiesProgress: {}, activityCompletionDates: {}, completedActivities: [], password: '1234', mustChangePassword: true}, ...scouts])
+          }} className="w-full py-4 bg-[#3b5a3b] text-white rounded-2xl font-black uppercase text-xs shadow-xl">+ Nový člen</button>
           <div className="grid gap-4">
             {scouts.map(s => (
               <div key={s.id} className="bg-white p-5 rounded-[2.5rem] border flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-4">
                   <span className="text-3xl">{s.avatar}</span>
                   <div>
-                    <h4 className="font-bold text-sm text-gray-800">{s.nickname}</h4>
+                    <div className="flex items-center gap-2">
+                       <h4 className="font-bold text-sm text-gray-800">{s.nickname}</h4>
+                       {s.role === 'admin' && <span className="text-[6px] bg-red-500 text-white px-1 py-0.5 rounded-md font-black uppercase">ADMIN</span>}
+                       {s.role === 'leader' && <span className="text-[6px] bg-blue-500 text-white px-1 py-0.5 rounded-md font-black uppercase">VEDOUCÍ</span>}
+                    </div>
                     <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{s.pointsByLevel[activeLevelId] || 0} bodů</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setSigningScout(s)} className="p-3 bg-blue-50 text-blue-600 rounded-xl text-[9px] font-black uppercase">🧭 Podpisy</button>
                   <button onClick={() => setEditingScout({...s})} className="p-3 bg-gray-50 text-[#3b5a3b] rounded-xl">✏️</button>
-                  <button onClick={() => setDeleteConfig({type: 'scout', id: s.id, title: 'Smazat skauta?', message: `Opravdu smazat ${s.nickname}?`})} className="p-3 bg-red-50 text-red-500 rounded-xl">🗑️</button>
+                  <button 
+                    onClick={() => setDeleteConfig({type: 'scout', id: s.id, title: 'Smazat skauta?', message: `Opravdu smazat ${s.nickname}?`})} 
+                    disabled={userRole === 'leader' && s.role === 'admin'}
+                    className={`p-3 rounded-xl transition-all ${userRole === 'leader' && s.role === 'admin' ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-red-50 text-red-500'}`}
+                  >
+                    🗑️
+                  </button>
                 </div>
               </div>
             ))}
@@ -583,6 +831,39 @@ const Admin: React.FC<Props> = ({
         <div className="space-y-6 animate-fadeIn">
           <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm space-y-10">
             <section className="space-y-4">
+              <h3 className="text-sm font-black text-[#3b5a3b] uppercase tracking-widest">Nastavení leaderboardu</h3>
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100/50">
+                <div className="flex-1">
+                  <span className="text-[10px] font-black text-gray-500 uppercase">Zobrazit celkový leaderboard</span>
+                  <p className="text-[8px] text-gray-300 mt-1 uppercase">Pokud je vypnuto, uživatelé vidí jen posledních 30 dní</p>
+                </div>
+                <button 
+                  onClick={() => onUpdateSettings({...safeSettings, showTotalLeaderboard: !safeSettings.showTotalLeaderboard})}
+                  className={`w-12 h-6 rounded-full relative transition-colors ${safeSettings.showTotalLeaderboard ? 'bg-[#3b5a3b]' : 'bg-gray-200'}`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${safeSettings.showTotalLeaderboard ? 'right-1' : 'left-1'}`} />
+                </button>
+              </div>
+            </section>
+
+            <section className="space-y-4 pt-6 border-t">
+              <h3 className="text-sm font-black text-[#3b5a3b] uppercase tracking-widest">Dokumenty a Odkazy</h3>
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase text-gray-400 pl-4">URL odkaz na PDF stezku (např. Disk)</label>
+                  <input 
+                    type="url" 
+                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-[#3b5a3b]/20" 
+                    placeholder="https://drive.google.com/..." 
+                    value={safeSettings.pdfUrl || ''} 
+                    onChange={e => onUpdateSettings({...safeSettings, pdfUrl: e.target.value})} 
+                  />
+                  <p className="text-[8px] text-gray-300 px-4 uppercase">Pokud vyplníš, tlačítko ve Stezce otevře tento odkaz.</p>
+                </div>
+              </div>
+            </section>
+
+            <section className="space-y-4 pt-6 border-t">
               <h3 className="text-sm font-black text-[#3b5a3b] uppercase tracking-widest">Nastavení bodování</h3>
               <div className="grid grid-cols-1 gap-3">
                 {[
@@ -599,6 +880,7 @@ const Admin: React.FC<Props> = ({
                 ))}
               </div>
             </section>
+
             <section className="space-y-4 pt-6 border-t">
               <h3 className="text-sm font-black text-[#3b5a3b] uppercase tracking-widest">Správa dat</h3>
               <div className="grid grid-cols-2 gap-4">
@@ -610,7 +892,7 @@ const Admin: React.FC<Props> = ({
         </div>
       )}
 
-      {/* ✍️ PODPIS TAB - Nyní seznam čekajících úkolů */}
+      {/* ✍️ PODPIS TAB */}
       {activeAdminTab === 'qr' && (
         <section className="space-y-6 animate-fadeIn">
           <div className="bg-[#3b5a3b] text-white rounded-[3rem] p-8 shadow-xl relative overflow-hidden">
@@ -658,7 +940,6 @@ const Admin: React.FC<Props> = ({
              )}
           </div>
 
-          {/* QR kód ponechán dole pro rychlé skenování pokud je potřeba */}
           <div className="pt-10 flex flex-col items-center space-y-4 opacity-30 hover:opacity-100 transition-opacity">
              <p className="text-[8px] font-black text-gray-400 uppercase">Rychlé digitální razítko</p>
              <div className="bg-white p-4 rounded-3xl inline-block border-4 border-white shadow-sm">
@@ -670,11 +951,46 @@ const Admin: React.FC<Props> = ({
       )}
 
       {/* --- MODALS --- */}
+      
+      {/* Edit Subcategory Modal */}
+      {editingSubcategory && (
+        <div className="fixed inset-0 z-[600] bg-black/60 backdrop-blur-xl flex items-center justify-center p-6">
+          <div className="bg-white rounded-[3rem] p-8 max-sm w-full space-y-6 shadow-2xl animate-fadeIn">
+            <h3 className="text-xl font-bold text-[#3b5a3b] text-center">Přejmenovat kapitolu</h3>
+            <input className="w-full p-4 bg-gray-50 border rounded-2xl text-sm font-bold" value={editingSubcategory.title} onChange={e => setEditingSubcategory({...editingSubcategory, title: e.target.value})} placeholder="Název kapitoly" />
+            <button onClick={saveSubcategoryEdit} className="w-full py-4 bg-[#3b5a3b] text-white rounded-2xl font-bold shadow-xl">Uložit</button>
+            <button onClick={() => setEditingSubcategory(null)} className="w-full text-gray-400 text-[10px] font-black uppercase">Zrušit</button>
+          </div>
+        </div>
+      )}
 
-      {/* Individual Task Signing Modal (Manually by Admin) */}
+      {/* Edit Area Modal */}
+      {editingArea && (
+        <div className="fixed inset-0 z-[600] bg-black/60 backdrop-blur-xl flex items-center justify-center p-6">
+          <div className="bg-white rounded-[3rem] p-8 max-sm w-full space-y-6 shadow-2xl animate-fadeIn">
+            <h3 className="text-xl font-bold text-[#3b5a3b] text-center">Upravit oblast</h3>
+            <div className="space-y-4">
+               <div className="flex gap-4">
+                  <div className="w-20 space-y-1">
+                     <label className="text-[9px] font-black uppercase text-gray-400 pl-2">Ikona</label>
+                     <input className="w-full p-4 bg-gray-50 border rounded-2xl text-xl text-center" value={editingArea.icon} onChange={e => setEditingArea({...editingArea, icon: e.target.value})} />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                     <label className="text-[9px] font-black uppercase text-gray-400 pl-2">Název oblasti</label>
+                     <input className="w-full p-4 bg-gray-50 border rounded-2xl text-sm font-bold" value={editingArea.title} onChange={e => setEditingArea({...editingArea, title: e.target.value})} placeholder="Název oblasti" />
+                  </div>
+               </div>
+            </div>
+            <button onClick={saveAreaEdit} className="w-full py-4 bg-[#3b5a3b] text-white rounded-2xl font-bold shadow-xl">Uložit</button>
+            <button onClick={() => setEditingArea(null)} className="w-full text-gray-400 text-[10px] font-black uppercase">Zrušit</button>
+          </div>
+        </div>
+      )}
+
+      {/* Signing Scout Modal */}
       {signingScout && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-6 bg-[#3b5a3b]/60 backdrop-blur-xl">
-          <div className="bg-white rounded-[3rem] p-8 max-w-md w-full max-h-[90vh] flex flex-col space-y-6 shadow-2xl animate-fadeIn">
+          <div className="bg-white rounded-[3rem] p-8 max-md w-full max-h-[90vh] flex flex-col space-y-6 shadow-2xl animate-fadeIn">
             <div className="text-center">
               <h3 className="text-xl font-bold text-[#3b5a3b]">{signingScout.nickname} - Podpisy</h3>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Ruční schválení úkolů</p>
@@ -730,10 +1046,10 @@ const Admin: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Bonus (Reward) Modal */}
+      {/* Bonus Modal */}
       {bonusModal && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-6 bg-[#3b5a3b]/60 backdrop-blur-xl">
-          <div className="bg-white rounded-[3rem] p-8 max-w-sm w-full space-y-6 shadow-2xl animate-fadeIn">
+          <div className="bg-white rounded-[3rem] p-8 max-sm w-full space-y-6 shadow-2xl animate-fadeIn">
             <h3 className="text-xl font-bold parchment-font text-[#3b5a3b] text-center">Odměnit skauta 💎</h3>
             <div className="space-y-4">
               <select className="w-full p-4 bg-gray-50 border rounded-2xl text-xs font-bold" value={bonusForm.scoutId} onChange={e => setBonusForm({...bonusForm, scoutId: e.target.value})}>
@@ -746,7 +1062,7 @@ const Admin: React.FC<Props> = ({
                  <span className="text-[10px] font-black uppercase text-gray-500">Počet bodů:</span>
                  <input type="number" className="w-16 p-2 bg-white border rounded-xl text-center font-bold" value={bonusForm.points} onChange={e => setBonusForm({...bonusForm, points: parseInt(e.target.value) || 0})} />
               </div>
-              <input className="w-full p-4 bg-gray-50 border rounded-2xl text-sm" placeholder="Důvod (např. za pomoc s nádobím)" value={bonusForm.reason} onChange={e => setBonusForm({...bonusForm, reason: e.target.value})} />
+              <input className="w-full p-4 bg-gray-50 border rounded-2xl text-sm" placeholder="Důvod..." value={bonusForm.reason} onChange={e => setBonusForm({...bonusForm, reason: e.target.value})} />
             </div>
             <button onClick={saveBonus} disabled={!bonusForm.scoutId} className="w-full py-4 bg-[#3b5a3b] text-white rounded-2xl font-bold shadow-xl disabled:opacity-50">Odměnit</button>
             <button onClick={() => setBonusModal(null)} className="w-full text-gray-400 text-[10px] font-black uppercase">Zrušit</button>
@@ -770,7 +1086,7 @@ const Admin: React.FC<Props> = ({
                       newTeams.forEach(t => { if (!newResults[t.id]) newResults[t.id] = 0; });
                       setGameForm({ ...gameForm, teams: newTeams, results: newResults });
                     } else {
-                      alert("Tato akce nemá definované žádné týmy. Použij tlačítko '🎲 Týmy' v seznamu akcí nebo vytvoř týmy přímo zde.");
+                      alert("Tato akce nemá definované žádné týmy.");
                     }
                   }} className="text-[8px] font-black uppercase text-[#3b5a3b] bg-[#3b5a3b]/5 px-3 py-2 rounded-xl border border-[#3b5a3b]/20">📋 Načíst týmy</button>
                 )}
@@ -802,56 +1118,49 @@ const Admin: React.FC<Props> = ({
                              <button key={num} onClick={() => createTeamsFromParticipants(num)} className="py-4 bg-[#3b5a3b] text-white rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">Vytvořit {num} týmy</button>
                           ))}
                         </div>
-                        <p className="text-[8px] text-gray-300 uppercase">Z přítomných členů</p>
                       </div>
                     ) : (
-                      <>
-                        <div className="grid gap-4">
-                          {gameForm.teams.map(t => {
-                            const meetingTeams = safeSettings.meetings.find(m => m.id === gameModal.meetingId)?.teams || [];
-                            const teamData = meetingTeams.find(mt => mt.name === t.name);
-                            
-                            return (
-                              <div key={t.id} className="bg-gray-50 p-5 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-[#3b5a3b]">{t.name}</span>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[9px] font-bold text-gray-400 uppercase">Body:</span>
-                                    <input type="number" className="w-16 p-2 bg-white border rounded-xl text-center font-bold" value={gameForm.results[t.id] || ''} onChange={e => setGameForm({...gameForm, results: {...gameForm.results, [t.id]: parseInt(e.target.value) || 0}})} />
-                                  </div>
-                                </div>
-                                
-                                <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
-                                  {teamData?.members.map(mid => {
-                                    const s = scouts.find(sc => sc.id === mid);
-                                    if (!s) return null;
-                                    return (
-                                      <div key={mid} className="bg-white border border-gray-100 rounded-2xl px-3 py-1.5 flex items-center gap-2 shadow-sm relative group">
-                                        <span className="text-sm">{s.avatar}</span>
-                                        <span className="text-[9px] font-bold text-gray-600 truncate max-w-[60px]">{s.nickname}</span>
-                                        <select 
-                                          className="absolute inset-0 opacity-0 cursor-pointer"
-                                          value={t.name}
-                                          onChange={(e) => moveScoutBetweenTeams(gameModal.meetingId, mid, e.target.value)}
-                                        >
-                                          {gameForm.teams.map(otherT => (
-                                            <option key={otherT.id} value={otherT.name}>Přesunout do {otherT.name}</option>
-                                          ))}
-                                        </select>
-                                        <span className="text-[8px] opacity-20 group-hover:opacity-100 pointer-events-none transition-opacity">⇆</span>
-                                      </div>
-                                    );
-                                  })}
-                                  {(!teamData || teamData.members.length === 0) && (
-                                    <p className="text-[8px] text-gray-300 italic uppercase">Tým je prázdný</p>
-                                  )}
+                      <div className="grid gap-4">
+                        {gameForm.teams.map(t => {
+                          const meetingTeams = safeSettings.meetings.find(m => m.id === gameModal.meetingId)?.teams || [];
+                          const teamData = meetingTeams.find(mt => mt.name === t.name);
+                          
+                          return (
+                            <div key={t.id} className="bg-gray-50 p-5 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-[#3b5a3b]">{t.name}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[9px] font-bold text-gray-400 uppercase">Body:</span>
+                                  <input type="number" className="w-16 p-2 bg-white border rounded-xl text-center font-bold" value={gameForm.results[t.id] || ''} onChange={e => setGameForm({...gameForm, results: {...gameForm.results, [t.id]: parseInt(e.target.value) || 0}})} />
                                 </div>
                               </div>
-                            );
-                          })}
-                        </div>
-                        <button onClick={() => setGameForm({...gameForm, teams: []})} className="w-full py-2 text-[8px] font-bold text-red-400 uppercase">Smazat týmy a zkusit znovu</button>
-                      </>
+                              
+                              <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+                                {teamData?.members.map(mid => {
+                                  const s = scouts.find(sc => sc.id === mid);
+                                  if (!s) return null;
+                                  return (
+                                    <div key={mid} className="bg-white border border-gray-100 rounded-2xl px-3 py-1.5 flex items-center gap-2 shadow-sm relative group">
+                                      <span className="text-sm">{s.avatar}</span>
+                                      <span className="text-[9px] font-bold text-gray-600 truncate max-w-[60px]">{s.nickname}</span>
+                                      <select 
+                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                        value={t.name}
+                                        onChange={(e) => moveScoutBetweenTeams(gameModal.meetingId, mid, e.target.value)}
+                                      >
+                                        {gameForm.teams.map(otherT => (
+                                          <option key={otherT.id} value={otherT.name}>Přesunout do {otherT.name}</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        <button onClick={() => setGameForm({...gameForm, teams: []})} className="w-full py-2 text-[8px] font-bold text-red-400 uppercase">Smazat týmy</button>
+                      </div>
                     )}
                   </div>
                 )}
@@ -901,7 +1210,8 @@ const Admin: React.FC<Props> = ({
               onUpdateScouts(scouts.map(s => {
                 if (bulkTaskForm.selectedScouts.includes(s.id) && s.activitiesProgress[bulkTaskForm.taskId] !== 'signed') {
                   const currentPoints = s.pointsByLevel[activeLevelId] || 0;
-                  return { ...s, pointsByLevel: { ...s.pointsByLevel, [activeLevelId]: currentPoints + ptsToAdd }, activitiesProgress: { ...s.activitiesProgress, [bulkTaskForm.taskId]: 'signed' }};
+                  const today = new Date().toISOString();
+                  return { ...s, pointsByLevel: { ...s.pointsByLevel, [activeLevelId]: currentPoints + ptsToAdd }, activitiesProgress: { ...s.activitiesProgress, [bulkTaskForm.taskId]: 'signed' }, activityCompletionDates: { ...s.activityCompletionDates, [bulkTaskForm.taskId]: today }};
                 }
                 return s;
               }));
@@ -915,7 +1225,7 @@ const Admin: React.FC<Props> = ({
       {/* Edit Activity Modal */}
       {editingActivity && (
         <div className="fixed inset-0 z-[600] bg-black/60 backdrop-blur-xl flex items-center justify-center p-6">
-          <div className="bg-white rounded-[3rem] p-8 max-w-sm w-full space-y-6 shadow-2xl animate-fadeIn">
+          <div className="bg-white rounded-[3rem] p-8 max-sm w-full space-y-6 shadow-2xl animate-fadeIn">
             <h3 className="text-xl font-bold text-[#3b5a3b] text-center">Editace úkolu</h3>
             <div className="space-y-4">
               <input className="w-full p-4 bg-gray-50 border rounded-2xl text-sm font-bold" value={editingActivity.activity.title} onChange={e => setEditingActivity({...editingActivity, activity: {...editingActivity.activity, title: e.target.value}})} placeholder="Název úkolu" />
@@ -931,10 +1241,10 @@ const Admin: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Scout Profile Edit Modal */}
+      {/* Scout Edit Modal */}
       {editingScout && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-6 bg-[#3b5a3b]/60 backdrop-blur-xl">
-          <div className="bg-white rounded-[3rem] p-8 max-w-sm w-full space-y-6 shadow-2xl animate-fadeIn max-h-[90vh] overflow-y-auto scrollbar-hide">
+          <div className="bg-white rounded-[3rem] p-8 max-sm w-full space-y-6 shadow-2xl animate-fadeIn max-h-[90vh] overflow-y-auto scrollbar-hide">
             <h3 className="text-xl font-bold parchment-font text-[#3b5a3b] text-center">Profil skauta</h3>
             <div className="space-y-4">
               <div className="flex flex-col items-center gap-2">
@@ -950,12 +1260,27 @@ const Admin: React.FC<Props> = ({
                   <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 pl-4">Přezdívka</label>
                   <input className="w-full p-4 bg-gray-50 border rounded-2xl text-sm font-bold" placeholder="Přezdívka" value={editingScout.nickname} onChange={e => setEditingScout({...editingScout, nickname: e.target.value})} />
                 </div>
+                
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 pl-4">Celé jméno</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 pl-4">Role</label>
+                  <select 
+                    className="w-full p-4 bg-gray-50 border rounded-2xl text-sm font-bold"
+                    value={editingScout.role}
+                    onChange={(e) => setEditingScout({...editingScout, role: e.target.value as UserRole})}
+                  >
+                    <option value="user">Uživatel (Skaut)</option>
+                    <option value="leader">Vedoucí</option>
+                    {/* Jen admin může povýšit na admina */}
+                    {userRole === 'admin' && <option value="admin">Administrátor</option>}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 pl-4">Celé jméno (Admin pouze)</label>
                   <input className="w-full p-4 bg-gray-50 border rounded-2xl text-sm" placeholder="Např. Jan Novák" value={editingScout.name || ''} onChange={e => setEditingScout({...editingScout, name: e.target.value})} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 pl-4">Body ({activeLevelId})</label>
+                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 pl-4">Celkové body ({activeLevelId})</label>
                   <input type="number" className="w-full p-4 bg-gray-50 border rounded-2xl text-center font-black text-xl text-[#3b5a3b]" value={editingScout.pointsByLevel[activeLevelId] || 0} onChange={e => setEditingScout({...editingScout, pointsByLevel: { ...editingScout.pointsByLevel, [activeLevelId]: parseInt(e.target.value) || 0}})} />
                 </div>
                 
@@ -963,7 +1288,6 @@ const Admin: React.FC<Props> = ({
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
                     <div className="flex-1">
                       <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none">Blokace profilu</p>
-                      <p className="text-[8px] text-gray-300 mt-1 uppercase">Zakáže změnu přezdívky a emoji</p>
                     </div>
                     <button 
                       onClick={() => setEditingScout({...editingScout, isProfileLocked: !editingScout.isProfileLocked})}
@@ -982,7 +1306,7 @@ const Admin: React.FC<Props> = ({
                 </div>
               </div>
             </div>
-            <button onClick={() => { onUpdateScouts(scouts.map(s => s.id === editingScout.id ? editingScout : s)); setEditingScout(null); }} className="w-full py-4 bg-[#3b5a3b] text-white rounded-2xl font-bold shadow-xl">Uložit profil</button>
+            <button onClick={handleSaveScoutProfile} className="w-full py-4 bg-[#3b5a3b] text-white rounded-2xl font-bold shadow-xl">Uložit profil</button>
             <button onClick={() => setEditingScout(null)} className="w-full text-gray-400 text-[10px] font-black uppercase text-center">Zrušit</button>
           </div>
         </div>
@@ -995,12 +1319,16 @@ const Admin: React.FC<Props> = ({
             <h3 className="text-xl font-bold parchment-font text-[#3b5a3b]">Upravit akci</h3>
             <div className="space-y-4">
               <input type="datetime-local" className="w-full p-4 bg-gray-50 border rounded-2xl font-bold text-sm" value={new Date(new Date(editingMeeting.date).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)} onChange={e => setEditingMeeting({...editingMeeting, date: e.target.value})} />
-              <textarea className="w-full p-4 bg-gray-50 border rounded-2xl text-sm" placeholder="Popis akce..." value={editingMeeting.notes} onChange={e => setEditingMeeting({...editingMeeting, notes: e.target.value})} rows={4} />
+              <textarea className="w-full p-4 bg-gray-50 border rounded-2xl text-sm" placeholder="Popis akce..." value={editingMeeting.notes} onChange={e => setEditingMeeting({...editingMeeting, notes: e.target.value})} rows={2} />
+              <div className="space-y-1">
+                 <label className="text-[9px] font-black uppercase text-gray-400 pl-4">Odkaz na fotoalbum</label>
+                 <input type="url" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-xs font-bold" placeholder="https://photos.google.com/..." value={editingMeeting.albumUrl || ''} onChange={e => setEditingMeeting({...editingMeeting, albumUrl: e.target.value})} />
+              </div>
             </div>
             <button onClick={() => {
               onUpdateSettings({...safeSettings, meetings: safeSettings.meetings.map(m => m.id === editingMeeting.id ? editingMeeting : m)});
               setEditingMeeting(null);
-            }} className="w-full py-4 bg-[#3b5a3b] text-white rounded-2xl font-bold">Uložit změny</button>
+            }} className="w-full py-4 bg-[#3b5a3b] text-white rounded-2xl font-bold shadow-xl">Uložit změny</button>
             <button onClick={() => setEditingMeeting(null)} className="w-full text-gray-400 text-[9px] font-black uppercase">Zrušit</button>
           </div>
         </div>
